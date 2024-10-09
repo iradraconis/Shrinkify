@@ -38,10 +38,11 @@ public class Shrinkify extends JFrame {
     private JProgressBar progressBar;
     private DefaultListModel<File> fileListModel;
     private JList<File> fileList;
+    private JLabel compressionInfoLabel;
 
     public Shrinkify(String[] args) throws IOException {
         setTitle("Shrinkify - PDF Kompressor mit PDFBox");
-        setSize(720, 270);
+        setSize(720, 380);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initComponents();
@@ -64,8 +65,10 @@ public class Shrinkify extends JFrame {
     }
 
     private void initComponents() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        // Hauptpanel mit GridBagLayout
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);  // Abstände zwischen den Komponenten
 
         // Datei-Auswahlbereich
         JPanel filePanel = new JPanel(new BorderLayout());
@@ -78,7 +81,7 @@ public class Shrinkify extends JFrame {
         fileListModel = new DefaultListModel<>();
         fileList = new JList<>(fileListModel);
         JScrollPane fileScrollPane = new JScrollPane(fileList);
-        fileScrollPane.setPreferredSize(new Dimension(400, 200));
+        fileScrollPane.setPreferredSize(new Dimension(400, 150));
         filePanel.add(fileScrollPane, BorderLayout.CENTER);
 
         // Hinzufügen von Drag-and-Drop-Funktionalität
@@ -98,7 +101,12 @@ public class Shrinkify extends JFrame {
             }
         });
 
-        panel.add(filePanel, BorderLayout.WEST);
+        // Datei-Auswahlbereich hinzufügen (linke Seite)
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridheight = 1;  // Nimmt drei Zeilen in Anspruch
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(filePanel, gbc);
 
         // Einstellungen
         JPanel settingsPanel = new JPanel();
@@ -159,15 +167,47 @@ public class Shrinkify extends JFrame {
         settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(progressBar);
 
-        panel.add(settingsPanel, BorderLayout.CENTER);
+        // Einstellungen-Panel hinzufügen (mittig)
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridheight = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(settingsPanel, gbc);
+
+        // Panel für die Buttons (Speichern und Vorschau)
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        // Test-Button für Vorschau der Komprimierung
+        JButton testButton = new JButton("Vorschau der Komprimierung");
+        testButton.addActionListener(e -> previewCompressedFile());
+        buttonPanel.add(testButton);
 
         // Speichern-Button
         saveButton = new JButton("Komprimieren und Speichern");
         saveButton.addActionListener(e -> compressAndSaveFiles());
-        panel.add(saveButton, BorderLayout.SOUTH);
+        buttonPanel.add(saveButton);
+
+        
+
+        // Button-Panel hinzufügen (unten, direkt über dem Label)
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(buttonPanel, gbc);
+
+        // Label für Kompressionsinformationen hinzufügen (ganz unten)
+        compressionInfoLabel = new JLabel("");
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panel.add(compressionInfoLabel, gbc);
 
         add(panel);
     }
+
+
 
     // Neue Klasse für Drag-and-Drop
     private class FileTransferHandler extends TransferHandler {
@@ -231,6 +271,54 @@ public class Shrinkify extends JFrame {
             }
         }
     }
+    
+    private void previewCompressedFile() {
+        if (fileListModel.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Bitte wählen Sie mindestens eine PDF-Datei aus.");
+            return;
+        }
+
+        File inputFile = fileListModel.getElementAt(0);  // Nur die erste Datei für Vorschau verwenden
+        float imageQuality = getImageQuality();
+        boolean convertBW = bwCheckBox.isSelected();
+        float resolutionScale = getResolutionScale();
+
+        try {
+            // Temporäre Datei erstellen
+            File tempFile = File.createTempFile("preview_compressed_", ".pdf");
+            tempFile.deleteOnExit();  // Wird nach dem Schließen des Programms gelöscht
+
+            long originalSize = inputFile.length();  // Ursprüngliche Dateigröße
+
+            // PDF komprimieren
+            compressPDFWithPDFBox(inputFile, tempFile, imageQuality, convertBW, resolutionScale);
+
+            long compressedSize = tempFile.length();  // Komprimierte Dateigröße
+
+            // Kompressionsinformationen berechnen
+            double originalSizeMB = originalSize / (1024.0 * 1024.0);
+            double compressedSizeMB = compressedSize / (1024.0 * 1024.0);
+            double reductionPercent = ((originalSize - compressedSize) / (double) originalSize) * 100;
+
+            // Label aktualisieren
+            String compressionInfo = String.format("Datei: %s\nOriginalgröße: %.2f MB - Komprimiert: %.2f MB - Reduktion: %.2f%%",
+                    inputFile.getName(), originalSizeMB, compressedSizeMB, reductionPercent);
+            compressionInfoLabel.setText("<html>" + compressionInfo.replace("\n", "<br>") + "</html>");  // Für mehrzeiligen Text im JLabel
+
+            // Vorschau anzeigen - Öffnet das temporäre PDF mit dem Standard-PDF-Viewer des Systems
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(tempFile);
+            } else {
+                JOptionPane.showMessageDialog(this, "Vorschau nicht unterstützt auf diesem System.");
+            }
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorschau.");
+        }
+    }
+
+
 
     private void compressAndSaveFiles() {
         if (fileListModel.isEmpty()) {
