@@ -67,7 +67,6 @@ public class Shrinkify extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-
         // Datei-Auswahlbereich
         JPanel filePanel = new JPanel(new BorderLayout());
         filePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -82,7 +81,7 @@ public class Shrinkify extends JFrame {
         fileScrollPane.setPreferredSize(new Dimension(400, 200));
         filePanel.add(fileScrollPane, BorderLayout.CENTER);
 
-        // **Hinzufügen von Drag-and-Drop-Funktionalität**
+        // Hinzufügen von Drag-and-Drop-Funktionalität
         fileList.setDropMode(DropMode.INSERT);
         fileList.setTransferHandler(new FileTransferHandler());
 
@@ -105,7 +104,6 @@ public class Shrinkify extends JFrame {
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
         settingsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
 
         // Qualitäts-Kombobox
         String[] qualities = {"Sehr niedrige Qualität", "Niedrigste Qualität", "Niedrige Qualität", "Mittlere Qualität", "Hohe Qualität", "Sehr hohe Qualität"};
@@ -171,15 +169,12 @@ public class Shrinkify extends JFrame {
         add(panel);
     }
 
-    // **Neue Klasse für Drag-and-Drop**
+    // Neue Klasse für Drag-and-Drop
     private class FileTransferHandler extends TransferHandler {
         @Override
         public boolean canImport(TransferSupport support) {
             // Überprüfen, ob Dateien importiert werden können
-            if (!support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                return false;
-            }
-            return true;
+            return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
         }
 
         @Override
@@ -242,40 +237,40 @@ public class Shrinkify extends JFrame {
             JOptionPane.showMessageDialog(this, "Bitte wählen Sie mindestens eine PDF-Datei aus.");
             return;
         }
-    
+
         float imageQuality = getImageQuality();
         boolean convertBW = bwCheckBox.isSelected();
         float resolutionScale = getResolutionScale();
         boolean overwriteFiles = overwriteCheckBox.isSelected();
-    
+
         File outputDir = null;
         if (!overwriteFiles) {
             JFileChooser dirChooser = new JFileChooser();
             dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            int option = dirChooser.showSaveDialog(this);
+            int option = dirChooser.showOpenDialog(this); // Hier wurde showSaveDialog zu showOpenDialog geändert
             if (option != JFileChooser.APPROVE_OPTION) {
                 return;
             }
             outputDir = dirChooser.getSelectedFile();
         }
-    
+
         // Listen zur Speicherung der Dateigrößen
         ArrayList<String> results = new ArrayList<>();
         DecimalFormat df = new DecimalFormat("#.##");
-    
+
         File finalOutputDir = outputDir;
-    
+
         // Startzeit erfassen
         long startTime = System.currentTimeMillis();
-    
+
         new Thread(() -> {
             progressBar.setMaximum(fileListModel.size());
             int progress = 0;
-    
+
             for (int i = 0; i < fileListModel.size(); i++) {
                 File inputFile = fileListModel.getElementAt(i);
                 File outputFile;
-    
+
                 if (overwriteFiles) {
                     // Temporäre Datei erstellen
                     try {
@@ -289,57 +284,56 @@ public class Shrinkify extends JFrame {
                 } else {
                     outputFile = new File(finalOutputDir, "komprimiert_" + inputFile.getName());
                 }
-    
+
                 try {
                     long originalSize = inputFile.length();
                     compressPDFWithPDFBox(inputFile, outputFile, imageQuality, convertBW, resolutionScale);
-    
+
                     if (overwriteFiles) {
                         // Originaldatei durch komprimierte Datei ersetzen
                         Files.move(outputFile.toPath(), inputFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     }
-    
+
                     long compressedSize = overwriteFiles ? inputFile.length() : outputFile.length();
-    
+
                     double originalSizeMB = originalSize / (1024.0 * 1024.0);
                     double compressedSizeMB = compressedSize / (1024.0 * 1024.0);
                     double reductionPercent = ((originalSize - compressedSize) / (double) originalSize) * 100;
-    
+
                     String result = String.format("Datei: %s\nOriginalgröße: %s MB\nKomprimiert: %s MB\nReduktion: %s%%\n",
                             inputFile.getName(),
                             df.format(originalSizeMB),
                             df.format(compressedSizeMB),
                             df.format(reductionPercent));
                     results.add(result);
-    
+
                 } catch (IOException ex) {
                     ex.printStackTrace();
                     JOptionPane.showMessageDialog(this, "Fehler beim Verarbeiten der Datei: " + inputFile.getName());
                 }
-    
+
                 progress++;
                 progressBar.setValue(progress);
             }
-    
+
             // Endzeit erfassen und Dauer berechnen
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             long seconds = (duration / 1000) % 60;
             long minutes = (duration / (1000 * 60)) % 60;
-    
+
             // Zusammenstellen der Ergebnisse
             StringBuilder message = new StringBuilder("Alle Dateien wurden erfolgreich verarbeitet.\n\n");
             for (String result : results) {
                 message.append(result).append("\n");
             }
-    
+
             // Zeit zur Nachricht hinzufügen
             message.append(String.format("Verstrichene Zeit: %d Minuten und %d Sekunden.", minutes, seconds));
-    
+
             JOptionPane.showMessageDialog(this, message.toString());
         }).start();
     }
-    
 
     private float getImageQuality() {
         String quality = (String) qualityComboBox.getSelectedItem();
@@ -452,7 +446,9 @@ public class Shrinkify extends JFrame {
             } catch (IOException ex) {
                 Logger.getLogger(Shrinkify.class.getName()).log(Level.SEVERE, null, ex);
             }
-            app.setVisible(true);
+            if (app != null) {
+                app.setVisible(true);
+            }
         });
     }
 }
