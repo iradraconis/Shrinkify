@@ -201,7 +201,7 @@ public class Shrinkify extends JFrame {
         saveButton.addActionListener(e -> compressAndSaveFiles());
         settingsPanel.add(saveButton);
         
-
+        
 
         // Fortschrittsbalken
         progressBar = new JProgressBar();
@@ -444,8 +444,8 @@ public class Shrinkify extends JFrame {
 
             // Zeit zur Nachricht hinzufügen
             message.append(String.format("Verstrichene Zeit: %d Minuten und %d Sekunden.", minutes, seconds));
-
-            JOptionPane.showMessageDialog(this, message.toString());
+            compressionInfoTextArea.setText(message.toString());
+            //JOptionPane.showMessageDialog(this, message.toString());
         }).start();
     }
 
