@@ -155,6 +155,7 @@ public class Shrinkify extends JFrame {
 
         // Überschreiben Checkbox
         overwriteCheckBox = new JCheckBox("Urspr. Dateien überschreiben");
+        overwriteCheckBox.setSelected(true);
         overwriteCheckBox.setForeground(Color.WHITE);
         overwriteCheckBox.setBackground(new Color(50, 50, 50));
         overwriteCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
