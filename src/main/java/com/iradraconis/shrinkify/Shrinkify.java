@@ -16,6 +16,8 @@ import java.util.logging.Logger;
 import javax.imageio.*;
 import javax.imageio.stream.ImageOutputStream;
 import javax.swing.*;
+import javax.swing.plaf.metal.DefaultMetalTheme;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
@@ -67,6 +69,7 @@ public class Shrinkify extends JFrame {
     private void initComponents() {
         // Hauptpanel mit GridBagLayout
         JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(50, 50, 50));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);  // Abstände zwischen den Komponenten
 
@@ -110,6 +113,7 @@ public class Shrinkify extends JFrame {
 
         // Einstellungen
         JPanel settingsPanel = new JPanel();
+        settingsPanel.setBackground(new Color(50, 50, 50)); 
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
         settingsPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -120,6 +124,7 @@ public class Shrinkify extends JFrame {
         qualityComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         qualityComboBox.setSelectedIndex(3);
         JLabel qualityLabel = new JLabel("Qualitätsstufe auswählen:");
+        qualityLabel.setForeground(Color.WHITE); 
         qualityLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         settingsPanel.add(qualityLabel);
         settingsPanel.add(qualityComboBox);
@@ -131,6 +136,7 @@ public class Shrinkify extends JFrame {
         resolutionComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         resolutionComboBox.setSelectedIndex(6); // standard auf 40 % setzen
         JLabel resolutionLabel = new JLabel("Auflösung reduzieren:");
+        resolutionLabel.setForeground(Color.WHITE);
         resolutionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         settingsPanel.add(Box.createVerticalStrut(10));
         settingsPanel.add(resolutionLabel);
@@ -138,12 +144,16 @@ public class Shrinkify extends JFrame {
 
         // Schwarz/Weiß Checkbox
         bwCheckBox = new JCheckBox("In Schwarz/Weiß konvertieren");
+        bwCheckBox.setForeground(Color.WHITE);        
+        bwCheckBox.setBackground(new Color(50, 50, 50));
         bwCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         settingsPanel.add(Box.createVerticalStrut(10));
         settingsPanel.add(bwCheckBox);
 
         // Überschreiben Checkbox
         overwriteCheckBox = new JCheckBox("Urspr. Dateien überschreiben");
+        overwriteCheckBox.setForeground(Color.WHITE);
+        overwriteCheckBox.setBackground(new Color(50, 50, 50));
         overwriteCheckBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         overwriteCheckBox.addActionListener(e -> {
             if (overwriteCheckBox.isSelected()) {
@@ -176,6 +186,7 @@ public class Shrinkify extends JFrame {
 
         // Panel für die Buttons (Speichern und Vorschau)
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        buttonPanel.setBackground(new Color(50, 50, 50)); // Dunkler Hintergrund
 
         // Test-Button für Vorschau der Komprimierung
         JButton testButton = new JButton("Vorschau der Komprimierung");
@@ -198,6 +209,7 @@ public class Shrinkify extends JFrame {
 
         // Label für Kompressionsinformationen hinzufügen (ganz unten)
         compressionInfoLabel = new JLabel("");
+        compressionInfoLabel.setForeground(Color.WHITE);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 3;
@@ -528,6 +540,17 @@ public class Shrinkify extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            try {
+                // Setze das Metal Look-and-Feel
+                UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+
+                // Optional: Setze den klassischen Metal-Stil anstelle des Ocean-Themes
+                MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+
+            } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+
             Shrinkify app = null;
             try {
                 app = new Shrinkify(args);
