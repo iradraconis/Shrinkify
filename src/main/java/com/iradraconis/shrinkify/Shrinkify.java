@@ -40,11 +40,11 @@ public class Shrinkify extends JFrame {
     private JProgressBar progressBar;
     private DefaultListModel<File> fileListModel;
     private JList<File> fileList;
-    private JLabel compressionInfoLabel;
+    private JTextArea compressionInfoTextArea;
 
     public Shrinkify(String[] args) throws IOException {
         setTitle("Shrinkify - PDF Kompressor mit PDFBox");
-        setSize(720, 380);
+        setSize(860, 550);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         initComponents();
@@ -76,6 +76,7 @@ public class Shrinkify extends JFrame {
         // Datei-Auswahlbereich
         JPanel filePanel = new JPanel(new BorderLayout());
         filePanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        filePanel.setBackground(new Color(50, 50, 50));
 
         JButton chooseFileButton = new JButton("PDF-Dateien hinzufügen");
         chooseFileButton.addActionListener(e -> chooseFiles());
@@ -84,7 +85,9 @@ public class Shrinkify extends JFrame {
         fileListModel = new DefaultListModel<>();
         fileList = new JList<>(fileListModel);
         JScrollPane fileScrollPane = new JScrollPane(fileList);
-        fileScrollPane.setPreferredSize(new Dimension(400, 150));
+        fileList.setVisibleRowCount(15);
+        // set fileList to width of 200
+        fileList.setFixedCellWidth(500);
         filePanel.add(fileScrollPane, BorderLayout.CENTER);
 
         // Hinzufügen von Drag-and-Drop-Funktionalität
@@ -107,8 +110,8 @@ public class Shrinkify extends JFrame {
         // Datei-Auswahlbereich hinzufügen (linke Seite)
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridheight = 1;  // Nimmt drei Zeilen in Anspruch
-        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridheight = 1; 
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(filePanel, gbc);
 
         // Einstellungen
@@ -158,7 +161,7 @@ public class Shrinkify extends JFrame {
         overwriteCheckBox.addActionListener(e -> {
             if (overwriteCheckBox.isSelected()) {
                 int confirm = JOptionPane.showConfirmDialog(this,
-                        "Warnung: Die Originaldateien werden überschrieben!\nMöchten Sie fortfahren?",
+                        "Warnung: Die Originaldateien werden überschrieben!\nFortfahren?",
                         "Originaldateien überschreiben",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE);
@@ -167,15 +170,10 @@ public class Shrinkify extends JFrame {
                 }
             }
         });
-        settingsPanel.add(Box.createVerticalStrut(10));
+        settingsPanel.add(Box.createVerticalStrut(15));
         settingsPanel.add(overwriteCheckBox);
 
-        // Fortschrittsbalken
-        progressBar = new JProgressBar();
-        progressBar.setStringPainted(true);
-        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        settingsPanel.add(Box.createVerticalStrut(20));
-        settingsPanel.add(progressBar);
+        
 
         // Einstellungen-Panel hinzufügen (mittig)
         gbc.gridx = 1;
@@ -185,36 +183,46 @@ public class Shrinkify extends JFrame {
         panel.add(settingsPanel, gbc);
 
         // Panel für die Buttons (Speichern und Vorschau)
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.setBackground(new Color(50, 50, 50)); // Dunkler Hintergrund
 
         // Test-Button für Vorschau der Komprimierung
         JButton testButton = new JButton("Vorschau der Komprimierung");
+
         testButton.addActionListener(e -> previewCompressedFile());
-        buttonPanel.add(testButton);
+        settingsPanel.add(testButton);
 
         // Speichern-Button
         saveButton = new JButton("Komprimieren und Speichern");
-        saveButton.addActionListener(e -> compressAndSaveFiles());
-        buttonPanel.add(saveButton);
+        
+        settingsPanel.add(Box.createVerticalStrut(15));
 
+        saveButton.addActionListener(e -> compressAndSaveFiles());
+        settingsPanel.add(saveButton);
         
 
-        // Button-Panel hinzufügen (unten, direkt über dem Label)
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(buttonPanel, gbc);
 
-        // Label für Kompressionsinformationen hinzufügen (ganz unten)
-        compressionInfoLabel = new JLabel("");
-        compressionInfoLabel.setForeground(Color.WHITE);
+        // Fortschrittsbalken
+        progressBar = new JProgressBar();
+        progressBar.setStringPainted(true);
+        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
+        settingsPanel.add(Box.createVerticalStrut(15));
+        settingsPanel.add(progressBar);
+        
+        
+        // TextArea für Kompressionsinformationen hinzufügen (ganz unten)
+        compressionInfoTextArea = new JTextArea(10, 20); // Vergrößere die Textarea um 5 Zeilen
+        compressionInfoTextArea.setEditable(false);
+        compressionInfoTextArea.setForeground(Color.WHITE);
+        compressionInfoTextArea.setBackground(new Color(50, 50, 50));
+        JScrollPane scrollPane = new JScrollPane(compressionInfoTextArea);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        panel.add(compressionInfoLabel, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        panel.add(scrollPane, gbc);
 
         add(panel);
     }
@@ -284,50 +292,56 @@ public class Shrinkify extends JFrame {
         }
     }
     
-    private void previewCompressedFile() {
+        private void previewCompressedFile() {
         if (fileListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Bitte wählen Sie mindestens eine PDF-Datei aus.");
             return;
         }
-
-        File inputFile = fileListModel.getElementAt(0);  // Nur die erste Datei für Vorschau verwenden
+    
         float imageQuality = getImageQuality();
         boolean convertBW = bwCheckBox.isSelected();
         float resolutionScale = getResolutionScale();
-
-        try {
-            // Temporäre Datei erstellen
-            File tempFile = File.createTempFile("preview_compressed_", ".pdf");
-            tempFile.deleteOnExit();  // Wird nach dem Schließen des Programms gelöscht
-
-            long originalSize = inputFile.length();  // Ursprüngliche Dateigröße
-
-            // PDF komprimieren
-            compressPDFWithPDFBox(inputFile, tempFile, imageQuality, convertBW, resolutionScale);
-
-            long compressedSize = tempFile.length();  // Komprimierte Dateigröße
-
-            // Kompressionsinformationen berechnen
-            double originalSizeMB = originalSize / (1024.0 * 1024.0);
-            double compressedSizeMB = compressedSize / (1024.0 * 1024.0);
-            double reductionPercent = ((originalSize - compressedSize) / (double) originalSize) * 100;
-
-            // Label aktualisieren
-            String compressionInfo = String.format("Datei: %s\nOriginalgröße: %.2f MB - Komprimiert: %.2f MB - Reduktion: %.2f%%",
-                    inputFile.getName(), originalSizeMB, compressedSizeMB, reductionPercent);
-            compressionInfoLabel.setText("<html>" + compressionInfo.replace("\n", "<br>") + "</html>");  // Für mehrzeiligen Text im JLabel
-
-            // Vorschau anzeigen - Öffnet das temporäre PDF mit dem Standard-PDF-Viewer des Systems
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(tempFile);
-            } else {
-                JOptionPane.showMessageDialog(this, "Vorschau nicht unterstützt auf diesem System.");
+    
+        new Thread(() -> {
+            StringBuilder compressionInfo = new StringBuilder();
+            for (int i = 0; i < fileListModel.size(); i++) {
+                File inputFile = fileListModel.getElementAt(i);
+    
+                try {
+                    // Temporäre Datei erstellen
+                    File tempFile = File.createTempFile("preview_compressed_", ".pdf");
+                    tempFile.deleteOnExit();  // Wird nach dem Schließen des Programms gelöscht
+    
+                    long originalSize = inputFile.length();  // Ursprüngliche Dateigröße
+    
+                    // PDF komprimieren
+                    compressPDFWithPDFBox(inputFile, tempFile, imageQuality, convertBW, resolutionScale);
+    
+                    long compressedSize = tempFile.length();  // Komprimierte Dateigröße
+    
+                    // Kompressionsinformationen berechnen
+                    double originalSizeMB = originalSize / (1024.0 * 1024.0);
+                    double compressedSizeMB = compressedSize / (1024.0 * 1024.0);
+                    double reductionPercent = ((originalSize - compressedSize) / (double) originalSize) * 100;
+    
+                    // Informationen hinzufügen
+                    compressionInfo.append(String.format("Datei: %s\nOriginalgröße: %.2f MB - Komprimiert: %.2f MB - Reduktion: %.2f%%\n\n",
+                            inputFile.getName(), originalSizeMB, compressedSizeMB, reductionPercent));
+    
+                    // Vorschau anzeigen - Öffnet das temporäre PDF mit dem Standard-PDF-Viewer des Systems
+                    if (Desktop.isDesktopSupported()) {
+                        Desktop.getDesktop().open(tempFile);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Vorschau nicht unterstützt auf diesem System.");
+                    }
+    
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorschau für Datei: " + inputFile.getName());
+                }
             }
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Fehler beim Erstellen der Vorschau.");
-        }
+            compressionInfoTextArea.setText(compressionInfo.toString());
+        }).start();
     }
 
 
@@ -487,11 +501,44 @@ public class Shrinkify extends JFrame {
 
                 for (COSName xObjectName : xObjectNames) {
                     PDXObject xObject = resources.getXObject(xObjectName);
+
                     if (xObject instanceof PDImageXObject) {
                         PDImageXObject imageObject = (PDImageXObject) xObject;
-                        BufferedImage image = imageObject.getImage();
 
-                        // Konvertierung in Schwarz/Weiß
+                        // Prüfen der Bilddimensionen vor dem Laden des Bildes
+                        int imageWidth = imageObject.getWidth();
+                        int imageHeight = imageObject.getHeight();
+
+                        // Skip if dimensions are invalid
+                        if (imageWidth <= 1 || imageHeight <= 1) {
+                            continue; // Bild überspringen
+                        }
+
+                        BufferedImage image;
+                        try {
+                            image = imageObject.getImage();
+                        } catch (Exception e) {
+                            continue;
+                        }
+
+                        // Prüfen der Dimensionen des geladenen BufferedImage
+                        int bufferedImageWidth = image.getWidth();
+                        int bufferedImageHeight = image.getHeight();
+
+                        if (bufferedImageWidth <= 1 || bufferedImageHeight <= 1) {
+                            continue; // Bild überspringen
+                        }
+
+                        // Bild nach Bedarf in RGB konvertieren
+                        if (image.getType() != BufferedImage.TYPE_INT_RGB) {
+                            BufferedImage rgbImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+                            Graphics2D g = rgbImage.createGraphics();
+                            g.drawImage(image, 0, 0, null);
+                            g.dispose();
+                            image = rgbImage;
+                        }
+
+                        // Bild in Schwarz-Weiß konvertieren, falls ausgewählt
                         if (convertBW) {
                             BufferedImage bwImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
                             Graphics2D g = bwImage.createGraphics();
@@ -500,36 +547,46 @@ public class Shrinkify extends JFrame {
                             image = bwImage;
                         }
 
-                        // Bildauflösung verringern, wenn nötig
+                        // Bildauflösung skalieren, falls erforderlich
                         if (resolutionScale != 1.0f) {
                             int newWidth = (int) (image.getWidth() * resolutionScale);
                             int newHeight = (int) (image.getHeight() * resolutionScale);
-                            BufferedImage scaledImage = new BufferedImage(newWidth, newHeight, image.getType());
-                            Graphics2D g = scaledImage.createGraphics();
-                            g.drawImage(image, 0, 0, scaledImage.getWidth(), scaledImage.getHeight(), null);
-                            g.dispose();
-                            image = scaledImage;
+
+                            // Überprüfen, ob die neuen Dimensionen gültig sind
+                            if (newWidth > 1 && newHeight > 1) {
+                                BufferedImage scaledImage = new BufferedImage(newWidth, newHeight, image.getType());
+                                Graphics2D g = scaledImage.createGraphics();
+                                g.drawImage(image, 0, 0, scaledImage.getWidth(), scaledImage.getHeight(), null);
+                                g.dispose();
+                                image = scaledImage;
+                            } else {
+                                continue; // Bild überspringen
+                            }
                         }
 
-                        // Bild komprimieren
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        ImageOutputStream ios = ImageIO.createImageOutputStream(baos);
-                        ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
-                        writer.setOutput(ios);
+                        // Bild komprimieren und speichern
+                        try {
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageOutputStream ios = ImageIO.createImageOutputStream(baos);
+                            ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+                            writer.setOutput(ios);
 
-                        ImageWriteParam param = writer.getDefaultWriteParam();
-                        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                        param.setCompressionQuality(imageQuality);
+                            ImageWriteParam param = writer.getDefaultWriteParam();
+                            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                            param.setCompressionQuality(imageQuality);
 
-                        writer.write(null, new IIOImage(image, null, null), param);
-                        writer.dispose();
+                            writer.write(null, new IIOImage(image, null, null), param);
+                            writer.dispose();
 
-                        InputStream in = new ByteArrayInputStream(baos.toByteArray());
-                        PDImageXObject compressedImage = JPEGFactory.createFromStream(document, in);
-                        resources.put(xObjectName, compressedImage);
+                            InputStream in = new ByteArrayInputStream(baos.toByteArray());
+                            PDImageXObject compressedImage = JPEGFactory.createFromStream(document, in);
+                            resources.put(xObjectName, compressedImage);
 
-                        IOUtils.closeQuietly(in);
-                        IOUtils.closeQuietly(ios);
+                            IOUtils.closeQuietly(in);
+                            IOUtils.closeQuietly(ios);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -537,6 +594,8 @@ public class Shrinkify extends JFrame {
             document.save(outputFile);
         }
     }
+
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
