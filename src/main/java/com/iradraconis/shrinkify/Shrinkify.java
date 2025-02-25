@@ -1,5 +1,6 @@
 package com.iradraconis.shrinkify;
 
+import com.formdev.flatlaf.FlatDarkLaf;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
@@ -16,9 +17,6 @@ import java.util.logging.Logger;
 import javax.imageio.*;
 import javax.imageio.stream.ImageOutputStream;
 import javax.swing.*;
-import javax.swing.plaf.metal.DefaultMetalTheme;
-import javax.swing.plaf.metal.MetalLookAndFeel;
-
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.io.IOUtils;
@@ -601,16 +599,12 @@ public class Shrinkify extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Setze das Metal Look-and-Feel
-                UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-
-                // Optional: Setze den klassischen Metal-Stil anstelle des Ocean-Themes
-                MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
-
-            } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+                // Setze den Akzentfarbwert auf Orange und verwende FlatDarkLaf
+                UIManager.put("FlatLaf.accentColor", new Color(255, 165, 0)); // Akzentfarbe Orange
+                UIManager.setLookAndFeel(new FlatDarkLaf());
+            } catch (UnsupportedLookAndFeelException e) {
                 e.printStackTrace();
             }
-
             Shrinkify app = null;
             try {
                 app = new Shrinkify(args);
