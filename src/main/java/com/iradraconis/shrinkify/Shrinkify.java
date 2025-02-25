@@ -1,6 +1,7 @@
 package com.iradraconis.shrinkify;
 
 import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.intellijthemes.FlatMonokaiProIJTheme;
 import java.awt.*;
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;
@@ -187,13 +188,13 @@ public class Shrinkify extends JFrame {
         buttonPanel.setBackground(new Color(50, 50, 50)); // Dunkler Hintergrund
 
         // Test-Button für Vorschau der Komprimierung
-        JButton testButton = new JButton("Vorschau der Komprimierung");
+        JButton testButton = new JButton("Vorschau");
 
         testButton.addActionListener(e -> previewCompressedFile());
         settingsPanel.add(testButton);
 
         // Speichern-Button
-        saveButton = new JButton("Komprimieren und Speichern");
+        saveButton = new JButton("Speichern");
         
         settingsPanel.add(Box.createVerticalStrut(15));
 
@@ -599,10 +600,8 @@ public class Shrinkify extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Setze den Akzentfarbwert auf Orange und verwende FlatDarkLaf
-                UIManager.put("FlatLaf.accentColor", new Color(255, 165, 0)); // Akzentfarbe Orange
-                UIManager.setLookAndFeel(new FlatDarkLaf());
-            } catch (UnsupportedLookAndFeelException e) {
+                FlatMonokaiProIJTheme.setup();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             Shrinkify app = null;
