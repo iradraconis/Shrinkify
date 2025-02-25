@@ -4,7 +4,6 @@ package com.iradraconis.shrinkify;
 import com.formdev.flatlaf.intellijthemes.FlatMonokaiProIJTheme;
 import java.awt.*;
 import java.awt.datatransfer.*;
-import java.awt.dnd.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -122,7 +121,10 @@ public class Shrinkify extends JFrame {
         // Qualitäts-Kombobox
         String[] qualities = {"Sehr niedrige Qualität", "Niedrigste Qualität", "Niedrige Qualität", "Mittlere Qualität", "Hohe Qualität", "Sehr hohe Qualität"};
         qualityComboBox = new JComboBox<>(qualities);
-        qualityComboBox.setMaximumSize(new Dimension(200, qualityComboBox.getPreferredSize().height));
+        qualityComboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, qualityComboBox.getPreferredSize().height));
+        
+
+
         qualityComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         qualityComboBox.setSelectedIndex(3);
         JLabel qualityLabel = new JLabel("Qualitätsstufe auswählen:");
@@ -134,7 +136,7 @@ public class Shrinkify extends JFrame {
         // Auflösungs-Kombobox
         String[] resolutions = {"100%", "90%", "80%", "70%", "60%", "50%", "40%", "30%"};
         resolutionComboBox = new JComboBox<>(resolutions);
-        resolutionComboBox.setMaximumSize(new Dimension(200, resolutionComboBox.getPreferredSize().height));
+        resolutionComboBox.setMaximumSize(new Dimension(Integer.MAX_VALUE, resolutionComboBox.getPreferredSize().height));
         resolutionComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
         resolutionComboBox.setSelectedIndex(6); // standard auf 40 % setzen
         JLabel resolutionLabel = new JLabel("Auflösung reduzieren:");
@@ -189,7 +191,6 @@ public class Shrinkify extends JFrame {
 
         // Test-Button für Vorschau der Komprimierung
         JButton testButton = new JButton("Vorschau");
-        // stretch button width to panel width
         testButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, testButton.getPreferredSize().height));
 
         testButton.addActionListener(e -> previewCompressedFile());
