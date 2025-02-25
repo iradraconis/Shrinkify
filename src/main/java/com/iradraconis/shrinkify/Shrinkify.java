@@ -1,6 +1,6 @@
 package com.iradraconis.shrinkify;
 
-import com.formdev.flatlaf.FlatDarkLaf;
+
 import com.formdev.flatlaf.intellijthemes.FlatMonokaiProIJTheme;
 import java.awt.*;
 import java.awt.datatransfer.*;
@@ -189,12 +189,16 @@ public class Shrinkify extends JFrame {
 
         // Test-Button für Vorschau der Komprimierung
         JButton testButton = new JButton("Vorschau");
+        // stretch button width to panel width
+        testButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, testButton.getPreferredSize().height));
 
         testButton.addActionListener(e -> previewCompressedFile());
         settingsPanel.add(testButton);
 
         // Speichern-Button
         saveButton = new JButton("Speichern");
+        // stretch button width to panel width
+        saveButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, saveButton.getPreferredSize().height));
         
         settingsPanel.add(Box.createVerticalStrut(15));
 
